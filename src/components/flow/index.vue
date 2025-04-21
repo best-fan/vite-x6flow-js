@@ -16,7 +16,7 @@ import Panel from './components/panel.vue';
 import MapTool from './components/tool/mapTool.vue';
 import nodeSettingTool from './components/tool/nodeSettingTool.vue';
 import edgeSettingTool from './components/tool/edgeSettingTool.vue';
-
+import {getConfig} from '../../data.js'
 // 预览回显数据
 const props = defineProps({
   config: {
@@ -68,8 +68,8 @@ async function initX6() {
     return;
   }
   // 编辑模式回显
-  // const baseData = await getConfig();
-  // graph.fromJSON(baseData);
+  const baseData = await getConfig(props.id);
+  graph.fromJSON(baseData);
 }
 function setEditStatus() {
   isEditStatus.value = true;
@@ -162,6 +162,8 @@ function setupGraphEvents(graph) {
 function getNewGraphJson(graph) {
   const newGraphJson = getGraphJsonData(graph);
   baseConfig.cells = newGraphJson.cells;
+  console.log('baseConfig.cells',baseConfig.cells);
+  
 }
 </script>
 
