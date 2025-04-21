@@ -4,7 +4,7 @@ import Flow from './components/flow/index.vue';
 </script>
 
 <template>
-  <n-tabs class="demo-tabs" default-value="show">
+  <n-tabs class="demo-tabs" default-value="if">
     <n-tab-pane name="if" display-directive="if" tab="flow编辑">
       <div class="demo">
         <Flow class="my-flow-1" :id="'flow-' + new Date().getTime() + 'true'" />
