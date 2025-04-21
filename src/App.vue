@@ -8,9 +8,12 @@ import Flow from  './components/flow/index.vue'
   <Flow class="my-flow" />
 </template>
 
-<style scoped>
+<style lang="scss" scoped>
 .my-flow{
   width: 100vw;
   height: 100vh;
+&:focus{
+  outline: none;
+}
 }
 </style>

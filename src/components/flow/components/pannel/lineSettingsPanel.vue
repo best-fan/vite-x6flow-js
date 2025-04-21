@@ -32,9 +32,16 @@
 
 <script setup>
 import { svgIcon } from '../../utils/shape'
-import { globalGraph, globalDnd, setConnectEdgeConfig } from '../../utils/graph'
+import { setConnectEdgeConfig, getThisGraphAndDnd } from '../../utils/graph'
 const lineTypes = [...Object.values(svgIcon)].slice(0, 6)
 const show = ref(false)
+const { flowDomId } = defineProps({
+  flowDomId: {
+    type: String,
+    default: '',
+  },
+})
+const { graph: globalGraph } = getThisGraphAndDnd(flowDomId)
 
 const onClickoutside = () => {
   close()
@@ -43,8 +50,6 @@ const onClickoutside = () => {
 const open = () => {
   show.value = true
   globalGraph.on('edge:created', ({ edge }) => {
-    console.log('edge:created', edge)
-
     edge.setConnector({
       name: 'normal', // 设置平滑曲线连线器
       args: {

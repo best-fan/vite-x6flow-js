@@ -11,21 +11,28 @@
       :style="isShowMinmap ? 'transform:rotate(180deg)' : ''"
       @click="setMinmapStatus"
     />
-    <div id="minimap"></div>
+    <div class="minimap_main" :id="'minimap' + flowDomId"></div>
   </div>
 </template>
 
 <script setup>
 import { ref } from 'vue'
-import { globalGraph } from '../../utils/graph.js'
+import { getThisGraphAndDnd } from '../../utils/graph.js'
 const isShowMinmap = ref(true)
 import TipTool from './tipTool.vue'
 const zoomNum = ref(100)
+const { flowDomId } = defineProps({
+  flowDomId: {
+    type: String,
+    default: '',
+  },
+})
 onMounted(() => {
   setMinmapStatus()
 })
 
 const action = (type) => {
+  const { graph: globalGraph } = getThisGraphAndDnd(flowDomId)
   if (type === 'scaleUp') {
     globalGraph.zoom(0.1)
   } else if (type === 'scaleDown') {
@@ -38,18 +45,22 @@ const action = (type) => {
 }
 
 const download = () => {
+  const { graph: globalGraph } = getThisGraphAndDnd(flowDomId)
   globalGraph.exportPNG(`${new Date().getTime()}.png`, {
-    width: 1920,
-    height: 1080,
-    padding: 20,
+    padding: 80, // 添加边距，防止图形被裁剪
+    scale: 2, // 设置导出的缩放比例，确保图形更清晰
+    width: globalGraph.view.options.width, // 导出时的宽度
+    height: globalGraph.view.options.height, // 导出时的高度
     quality: 1,
   })
 }
 const setMinmapStatus = async () => {
   isShowMinmap.value = !isShowMinmap.value
   await nextTick()
-  if (document.getElementById('minimap')) {
-    document.getElementById('minimap').style.display = isShowMinmap.value ? 'block' : 'none'
+  if (document.getElementById('minimap' + flowDomId)) {
+    document.getElementById('minimap' + flowDomId).style.display = isShowMinmap.value
+      ? 'block'
+      : 'none'
   }
 }
 </script>
@@ -78,7 +89,7 @@ const setMinmapStatus = async () => {
     text-align: center;
   }
 }
-#minimap {
+.minimap_main {
   position: absolute;
   width: 220px;
   height: 140px;

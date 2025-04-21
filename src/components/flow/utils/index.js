@@ -1,5 +1,3 @@
-import { globalGraph } from './graph'
-
 // 删除节点
 export const delNode = (graph) => {
   const cells = graph.getSelectedCells()
@@ -73,15 +71,15 @@ export const setNodePortsVisible = (node, visible = true) => {
 }
 
 // 设置所有节点的连接桩是否可见
-export const setAllNodePortsVisible = (show = true) => {
-  const container = document.getElementById('flow-container')
+export const setAllNodePortsVisible = (show = true,_graph) => {
+  const container = _graph.view.container
   const ports = container.querySelectorAll('.x6-port-body')
   const showPorts = (ports, show) => {
     for (let i = 0, len = ports.length; i < len; i = i + 1) {
       ports[i].style.visibility = show ? 'visible' : 'hidden'
     }
   }
-  globalGraph.disableHistory()
+  _graph.disableHistory()
   showPorts(ports, show)
-  globalGraph.enableHistory()
+  _graph.enableHistory()
 }

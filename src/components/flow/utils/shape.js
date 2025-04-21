@@ -2829,13 +2829,18 @@ export const drawPathShape = (ctx, shape, isHit = false) => {
 export function pathArryToPathStr(pathArr, w, h) {
   // 初始化路径
   let path = ''
+
+  // 辅助函数：计算表达式的值
+  function calculateExpression(expr, w, h) {
+    return new Function('w', 'h', `return ${expr}`)(w, h)
+  }
   // 遍历每个路径数据
   pathArr.forEach((item) => {
     item.actions.forEach((action) => {
-      const x = eval(action.x) // 计算 x 坐标的表达式
-      const y = eval(action.y) // 计算 y 坐标的表达式
+      const x = calculateExpression(action.x, w, h) // 计算 x 坐标的表达式
+      const y = calculateExpression(action.y, w, h) // 计算 y 坐标的表达式
       // console.log('action', action)
-
+      let x1, y1, x2, y2, qx1, qy1
       switch (action.action) {
         case 'move':
           path += `M ${x} ${y} `
@@ -2844,15 +2849,15 @@ export function pathArryToPathStr(pathArr, w, h) {
           path += `L ${x} ${y} `
           break
         case 'curve':
-          const x1 = eval(action.x1)
-          const y1 = eval(action.y1)
-          const x2 = eval(action.x2)
-          const y2 = eval(action.y2)
+          x1 = calculateExpression(action.x1, w, h)
+          y1 = calculateExpression(action.y1, w, h)
+          x2 = calculateExpression(action.x2, w, h)
+          y2 = calculateExpression(action.y2, w, h)
           path += `C ${x1} ${y1}, ${x2} ${y2}, ${x} ${y} `
           break
         case 'quadraticCurve':
-          const qx1 = eval(action.x1)
-          const qy1 = eval(action.y1)
+          qx1 = calculateExpression(action.x1, w, h)
+          qy1 = calculateExpression(action.y1, w, h)
           path += `Q ${qx1} ${qy1}, ${x} ${y} `
           break
         case 'close':

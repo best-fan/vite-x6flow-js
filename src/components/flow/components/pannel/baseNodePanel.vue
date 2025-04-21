@@ -81,7 +81,7 @@
 
 <script setup>
 import { nodePorts } from '../../config'
-import { globalGraph, globalDnd } from '../../utils/graph'
+import { getThisGraphAndDnd } from '../../utils/graph'
 import {
   graphGroupList,
   baseShape,
@@ -94,6 +94,13 @@ const show = ref(false)
 const selectGroupKey = ref('baseShape')
 const shapeList = ref([])
 const baseNodeRefs = ref([])
+const { flowDomId } = defineProps({
+  flowDomId: {
+    type: String,
+    default: '',
+  },
+})
+const { graph: globalGraph , dnd:globalDnd} = getThisGraphAndDnd(flowDomId)
 
 async function initData() {
   const defaultGroupItem = graphGroupList[0]
@@ -122,6 +129,7 @@ const getGroupItemByType = async (type) => {
           break
         case 'flowShape':
           resolve(flowShape)
+          break
         default:
           resolve([])
           break

@@ -14,6 +14,7 @@
     <span
       class="sticky-node-item"
       v-for="(item, index) in stickyNodeList"
+      :key="index"
       :style="{ background: item.backgroundColor }"
       @mousedown="handleMouseDown(item, $event)"
     ></span>
@@ -21,9 +22,17 @@
 </template>
 
 <script setup>
-import { globalGraph, globalDnd } from '../../utils/graph'
+import { getThisGraphAndDnd } from '../../utils/graph'
 import { stickyNodeList, nodePorts } from '../../config'
 const show = ref(false)
+
+const { flowDomId } = defineProps({
+  flowDomId: {
+    type: String,
+    default: '',
+  },
+})
+const { graph: globalGraph,dnd:globalDnd } = getThisGraphAndDnd(flowDomId)
 
 const handleMouseDown = (item, e) => {
   console.log('handleMouseDown', item, e)

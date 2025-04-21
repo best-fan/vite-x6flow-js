@@ -2,7 +2,7 @@
 <template>
   <div v-if="isVisible" :style="domPosition" class="node-edit-tools">
     <template v-if="!isLock">
-      <template v-if="shapeClassify !== 'brushPathShape'">
+      <template v-if="!['brushPathShape', 'imageShape'].includes(shapeClassify)">
         <!-- 字体大小 -->
         <n-input-number
           class="input-number"
@@ -44,7 +44,7 @@
             <template #trigger>
               <n-color-picker
                 class="color-picker"
-                :style="{borderColor:nodeStyle.borderColor}"
+                :style="{ borderColor: nodeStyle.borderColor }"
                 :actions="['confirm']"
                 v-model:value="nodeStyle.borderColor"
                 :swatches="quickColors"
@@ -57,7 +57,7 @@
       </template>
 
       <!-- 背景颜色 -->
-      <div class="selected-color-bg">
+      <div class="selected-color-bg" v-if="!['imageShape'].includes(shapeClassify)">
         <n-tooltip trigger="hover">
           <template #trigger>
             <n-color-picker
@@ -68,11 +68,11 @@
               @update:value="(value) => changAttrs(value, 'backgroundColor')"
             />
           </template>
-          背景颜色
+          {{ shapeClassify == 'baseShape' ? '背景颜色' : '边框颜色' }}
         </n-tooltip>
       </div>
     </template>
-    <div class="tool-svg">
+    <div class="tool-svg" v-if="!isLock">
       <n-tooltip trigger="hover">
         <template #trigger>
           <icons size="16" name="Copy" class="tool-svg" @click="copyNode" />
@@ -80,7 +80,7 @@
         复制
       </n-tooltip>
     </div>
-    <div class="tool-svg">
+    <div class="tool-svg" v-if="!isLock">
       <n-tooltip trigger="hover">
         <template #trigger>
           <icons size="16" name="Trash2" class="tool-svg" @click="deleteNode" />
@@ -104,7 +104,7 @@
     <!-- 更多 -->
     <div class="tool-svg">
       <n-dropdown
-        :options="moreDropdownOptions"
+        :options="moreDropdownOptionList"
         placement="bottom-start"
         trigger="hover"
         @select="moreSelcet"
@@ -116,9 +116,14 @@
 </template>
 
 <script setup>
-import { globalGraph, changeNodeTransformStatus, changeNodeSelectStatus } from '../../utils/graph'
+import {
+  changeNodeTransformStatus,
+  changeNodeSelectStatus,
+  getThisGraphAndDnd,
+} from '../../utils/graph'
 import { quickColors, svgTextAlignList, nodeStyleDefault, moreDropdownOptions } from './config'
 import { copyCells, pasteCells, delNode } from '../../utils/index'
+
 let selectedNode = null
 const isVisible = ref(false)
 let domPosition = reactive({
@@ -131,6 +136,20 @@ let nodeStyle = ref({
 })
 let shapeClassify = ref('')
 
+const moreDropdownOptionList = computed(() => {
+  if (isLock.value) {
+    return moreDropdownOptions.filter((item) => item.key != 'copyNode')
+  }
+  return moreDropdownOptions
+})
+const { flowDomId } = defineProps({
+  flowDomId: {
+    type: String,
+    default: '',
+  },
+})
+const { graph: globalGraph } = getThisGraphAndDnd(flowDomId)
+
 const changAttrs = (value, type) => {
   switch (type) {
     case 'fontSize':
@@ -142,6 +161,7 @@ const changAttrs = (value, type) => {
       selectedNode.attr('label/fill', value)
       break
     case 'backgroundColor':
+      // <!--shapeClassify： erShape  flowShape  baseShape -->
       switch (shapeClassify.value) {
         case 'baseShape':
           selectedNode.attr('path/fill', value)
@@ -160,7 +180,7 @@ const changAttrs = (value, type) => {
       break
     case 'borderColor':
       selectedNode.attr('body/stroke', value)
-
+      break
     default:
       break
   }
@@ -181,8 +201,8 @@ const lockNode = () => {
     ...selectedNode.getData(),
     disableMove: isLock.value,
   })
-  changeNodeTransformStatus(isLock.value, selectedNode)
-  changeNodeSelectStatus(!isLock.value, selectedNode)
+  changeNodeTransformStatus(isLock.value, selectedNode, globalGraph)
+  changeNodeSelectStatus(!isLock.value, selectedNode, globalGraph)
 }
 
 const moreSelcet = (key) => {
@@ -208,13 +228,13 @@ const moreSelcet = (key) => {
   }
 }
 function setDomPosition(node) {
-  const flowContainer = document.getElementById('flow-container')
+  const flowContainer = document.getElementById(flowDomId)
   const { width: viewWidth, height: viewHeight } = flowContainer.getBoundingClientRect()
   const graph = {
     width: viewWidth,
     height: viewHeight,
   }
-  const menuNums = isLock.value ? 4 : shapeClassify.value === 'brushPathShape' ? 5 : 9
+  const menuNums = isLock.value ? 2 : shapeClassify.value === 'brushPathShape' ? 5 : 9
   const toolSize = {
     width: 40 * menuNums + 20,
     height: 40,

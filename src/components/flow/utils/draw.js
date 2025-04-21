@@ -1,4 +1,4 @@
-import { globalGraph, changeSelectionStatus } from './graph.js'
+import { changeSelectionStatus, getThisGraphAndDnd } from './graph.js'
 
 export class DrawingBoard {
   constructor(parentElementId) {
@@ -23,10 +23,13 @@ export class DrawingBoard {
         top: 10,
       },
     }
+    this.graph = null
   }
   initCanvas() {
     this.paths = [] // 清空保存的路径
     const { width, height } = document.getElementById(this.parentElementId).style
+    const { graph } = getThisGraphAndDnd(this.parentElementId)
+    this.graph =graph
     // 动态创建 <canvas> 元素
     this.canvas = document.createElement('canvas')
     this.canvas.width = Number(width.replace('px', '')) - 80 || 800
@@ -45,7 +48,7 @@ export class DrawingBoard {
     this.ctx.lineCap = 'round'
     this.ctx.strokeStyle = stroke.color
 
-    changeSelectionStatus(false)
+    changeSelectionStatus(false,this.graph)
     const CROSSHAIR_CURSOR =
       'url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABEAAAARCAYAAAA7bUf6AAAAAXNSR0IArs4c6QAAAWFJREFUOBHFkb9Og1AUxgsxTTpQHXwBmZrUB0AGxj6EA4tDYSAEGR2gOrgQjAOLgyaGWKOP4OgCjEajz2AT0hlC8DsN14C1tE6e5Mv9c77z45xLp/OHKMuyC+1D/XoZXz+07VG4jfxJHMd6nucuzntt/qUcCgRoYhjGPZKlJEnPWZZdbAyCsQ9ZYRheEYCpAvmUX/pq/QKGRQe+71+naRqMRqMnBqE1SZIAnmG9prGvAK5pmosRRFF8q4NoNHgcqNsoZIcK4FiWNcXd9wgMRKPBM4F+H2UVgME8z7uB53gtwLbtO1ZUX3Vdf0DxKUS/ezmQoEd0/g9APaGDI9d1b2n7U5qmtY9QAbaKorgUBGHWAtgh78pAF8MoigIYGl2Mx+NH5M6gdgCRYTqkV2eQXq83p8fdGIBCDuZzRVEOBoPBTFXVT1mWC57n35Gbchw3x7o2CGLDtQu9Qi/QB4pzrBvHF5WKOd6JupulAAAAAElFTkSuQmCC") 1 16, auto'
 
@@ -81,7 +84,7 @@ export class DrawingBoard {
     this.addPathNode()
     const id = this.canvasConfig.id
     document.getElementById(id).style.cursor = 'grab'
-    changeSelectionStatus(true)
+    changeSelectionStatus(true,this.graph)
     document.getElementById(id).remove()
   }
 
@@ -123,9 +126,9 @@ export class DrawingBoard {
     const pathDataStr = this.getSvgPath()
     const { width, height } = this.getNodeSize()
     const { upHight, leftWidth } = this.calculateOffsetDistance(this.paths.flat())
-    const point = globalGraph.clientToLocal(this.paths.flat()[0].x, this.paths.flat()[0].y)
+    const point = this.graph.clientToLocal(this.paths.flat()[0].x, this.paths.flat()[0].y)
     const { offset, stroke } = this.canvasConfig
-    const node = globalGraph.createNode({
+    const node = this.graph.createNode({
       shape: 'path',
       x: point.x + offset.left - leftWidth,
       y: point.y + offset.top - upHight,
@@ -143,7 +146,7 @@ export class DrawingBoard {
         shapeClassify: 'brushPathShape',
       },
     })
-    globalGraph.addNode(node)
+    this.graph.addNode(node)
   }
   // 获取节点尺寸
   getNodeSize() {

@@ -1,12 +1,12 @@
 <template>
   <div class="x6-flow">
-    <div id="flow-container"></div>
+    <div class="flow-container" :id="flowId"></div>
     <template v-if="x6Flow && isEditStatus">
-      <panel></panel>
-      <node-setting-tool ref="comNodeTool" />
-      <edge-setting-tool ref="comEdgeTool" />
+      <panel :flowDomId="flowId"></panel>
+      <node-setting-tool :flowDomId="flowId" ref="comNodeTool" />
+      <edge-setting-tool :flowDomId="flowId" ref="comEdgeTool" />
     </template>
-    <map-tool />
+    <map-tool :flowDomId="flowId" />
   </div>
 </template>
 <script setup>
@@ -23,24 +23,41 @@ const props = defineProps({
     type: Object,
     default: () => {},
   },
+  // 唯一 ID
+  id: {
+    type: String,
+    default: `flow-${new Date().getTime()}`,
+  },
+  //区分是否 全屏弹窗
+  modal: {
+    type: Boolean,
+    default: false,
+  },
 });
 initRegister();
 let x6Flow = ref(null);
 const comNodeTool = ref(null);
 const comEdgeTool = ref(null);
-let baseConfig = { cells: [] };
+
+let baseConfig={ cells: [] };
+// 用于区分 编辑模式 还是预览模式
 const isEditStatus = ref(true);
+
+//x6画布唯一ID
+const flowId = computed(() => {
+  return props.id + '_' + Number(isEditStatus.value) + '_' + Number(props.modal);
+});
 onMounted(() => {
   setEditStatus();
   initX6();
 });
 onUnmounted(() => {
-  removeGlobalGraph();
+  !props.modal && removeGlobalGraph();
 });
 
 async function initX6() {
   await nextTick();
-  let graph = await createGraph('flow-container', isEditStatus.value);
+  let graph = await createGraph(flowId.value, isEditStatus.value);
   x6Flow.value = graph;
   if (isEditStatus.value) {
     setupGraphEvents(graph);
@@ -51,8 +68,8 @@ async function initX6() {
     return;
   }
   // 编辑模式回显
-  // const baseData = await getConfig()
-  // graph.fromJSON(baseData)
+  // const baseData = await getConfig();
+  // graph.fromJSON(baseData);
 }
 function setEditStatus() {
   isEditStatus.value = true;
@@ -142,8 +159,8 @@ function setupGraphEvents(graph) {
     .on('cell:changed', () => getNewGraphJson(graph));
 }
 // 获取最新数据
-function getNewGraphJson() {
-  const newGraphJson = getGraphJsonData();
+function getNewGraphJson(graph) {
+  const newGraphJson = getGraphJsonData(graph);
   baseConfig.cells = newGraphJson.cells;
 }
 </script>
@@ -153,7 +170,7 @@ function getNewGraphJson() {
   width: 100%;
   height: 100%;
   position: relative;
-  #flow-container {
+  .flow-container {
     width: 100%;
     height: 100%;
     position: relative;

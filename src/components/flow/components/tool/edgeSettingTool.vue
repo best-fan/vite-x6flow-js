@@ -168,18 +168,23 @@
 </template>
 
 <script setup>
-import { globalGraph } from '../../utils/graph'
+import { getThisGraphAndDnd } from '../../utils/graph'
 import { lineSvgList, arrowSvgList } from '../../utils/shape'
 import { delEdge } from '../../utils/index'
 import { quickColors, edgeStyleDefault } from './config'
-
+const { flowDomId } = defineProps({
+  flowDomId: {
+    type: String,
+    default: '',
+  },
+})
 let selectedEdge = null
 const isVisible = ref(false)
 let domPosition = reactive({
   ...edgeStyleDefault,
 })
-const isLock = ref(false)
 const edgeStyle = ref({})
+const { graph:globalGraph } = getThisGraphAndDnd(flowDomId)
 
 // 切换线样式 、 箭头样式
 const changeEdge = (type, value) => {
@@ -229,6 +234,7 @@ const changAttrs = (value, type) => {
       break
     case 'label':
       selectedEdge.setLabels([{ attrs: { label: { text: value } } }])
+      break
     default:
       break
   }
@@ -239,7 +245,7 @@ const deleteEdge = () => {
   hidden()
 }
 function setDomPosition(edge, { x, y }) {
-  const flowContainer = document.getElementById('flow-container')
+  const flowContainer = document.getElementById(flowDomId)
   const { width: viewWidth, height: viewHeight } = flowContainer.getBoundingClientRect()
   const graph = {
     width: viewWidth,

@@ -19,9 +19,11 @@ import {
   setAllNodePortsVisible,
 } from './index'
 
-export let globalGraph = null
+// 使用map 获取不同的graph
 
-export let globalDnd = null
+export let globalGraphList = new Map()
+
+export let globalDndList = new Map()
 
 //连线配置
 let connectEdgeConfig = {
@@ -68,13 +70,17 @@ export const setConnectEdgeConfig = (lineType, markerConfig) => {
 
 // 创建画布
 export const createGraph = (flowDomId, isEdit = true) => {
-  if (globalGraph) {
-    return Promise.resolve(globalGraph) // 如果已经初始化，直接返回已创建的实例
+  if (globalGraphList.has(flowDomId)) {
+    // console.log('画布已经初始化，直接返回实例');
+    return Promise.resolve(globalGraphList.get(flowDomId)) // 如果已经初始化，直接返回已创建的实例
   }
   return new Promise((resolve, reject) => {
     const x6Container = document.getElementById(flowDomId)
+    // console.log('创建画布',x6Container);
+    
     let graphConfig = {
       container: x6Container,
+      id: flowDomId,
       grid: {
         visible: true,
         type: 'doubleMesh',
@@ -133,19 +139,22 @@ export const createGraph = (flowDomId, isEdit = true) => {
         modifiers: null,
         eventTypes: ['leftMouseDown'],
       }
+      graphConfig.grid.visible = false
     }
-    globalGraph = new Graph(graphConfig)
-    globalDnd = new Dnd({
-      target: globalGraph,
+    let graph = new Graph(graphConfig)
+    let dnd = new Dnd({
+      target: graph,
     })
-    initGraphPlugins(globalGraph, isEdit)
-    addGraphEventListener(globalGraph, isEdit)
-    resolve(globalGraph)
+    globalDndList.set(flowDomId, dnd)
+    globalGraphList.set(flowDomId, graph)
+    initGraphPlugins(graph, isEdit,flowDomId)
+    addGraphEventListener(graph, isEdit)
+    resolve(graph)
   })
 }
 
 // 初始化画布插件
-function initGraphPlugins(graph, isEdit) {
+function initGraphPlugins(graph, isEdit,flowDomId) {
   if (isEdit) {
     graph
       .use(
@@ -220,17 +229,18 @@ function initGraphPlugins(graph, isEdit) {
           enabled: true,
         }),
       )
-      .use(new Export())
+     
   }
   // 小地图
   graph.use(
     new MiniMap({
-      container: document.getElementById('minimap'),
+      container: document.getElementById('minimap'+flowDomId),
       width: 220,
       height: 140,
       padding: 10,
     }),
-  )
+  ).use(new Export())
+
 }
 
 // 快捷键事件
@@ -274,44 +284,52 @@ function addGraphEventListener(graph, isEdit) {
   // // 鼠标悬停显示连接桩
   graph.on('node:mouseenter', ({ node }) => {
     // setNodePortsVisible(node, true)
-    setAllNodePortsVisible(true)
+    setAllNodePortsVisible(true, graph)
   })
 
   // // 鼠标离开隐藏连接桩
   graph.on('node:mouseleave', ({ node }) => {
     // setNodePortsVisible(node, false)
-    setAllNodePortsVisible(false)
+    setAllNodePortsVisible(false, graph)
   })
 }
 
-export const getGraphJsonData = () => {
-  let graphData = globalGraph.toJSON()
+export const getGraphJsonData = (_graph) => {
+  let graphData = _graph.toJSON()
   return graphData
 }
 
 // 画布框选状态切换
-export const changeSelectionStatus = (isOpen = true) => {
-  globalGraph.toggleRubberband(isOpen)
+export const changeSelectionStatus = (isOpen = true, _graph) => {
+  _graph.toggleRubberband(isOpen)
 }
 
 // 节点变换状态切换
-export const changeNodeTransformStatus = (enabled = true, node) => {
+export const changeNodeTransformStatus = (enabled = true, node, _graph) => {
   if (enabled) {
-    globalGraph.createTransformWidget(node)
+    _graph.createTransformWidget(node)
     return
   }
-  globalGraph.clearTransformWidgets()
+  _graph.clearTransformWidgets()
 }
 
 // 节点选中状态切换
-export const changeNodeSelectStatus = (isSelected = true, node) => {
+export const changeNodeSelectStatus = (isSelected = true, node, _graph) => {
   if (isSelected) {
-    globalGraph.select(node)
+    _graph.select(node)
     return
   }
-  globalGraph.unselect(node)
+  _graph.unselect(node)
 }
 
 export const removeGlobalGraph = () => {
-  globalGraph = null
+  globalGraphList.clear()
+  globalDndList.clear()
+}
+
+// 获取当前画布和dnd实例
+export const getThisGraphAndDnd = (id) => {
+  let graph = globalGraphList.get(id)
+  let dnd = globalDndList.get(id)
+  return { graph, dnd }
 }
